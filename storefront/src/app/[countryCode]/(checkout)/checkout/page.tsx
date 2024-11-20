@@ -7,6 +7,8 @@ import CheckoutSummary from "@modules/checkout/templates/checkout-summary"
 import { enrichLineItems, retrieveCart } from "@lib/data/cart"
 import { HttpTypes } from "@medusajs/types"
 import { getCustomer } from "@lib/data/customer"
+import { listCartPaymentMethods } from "@lib/data/payment"
+import { listCartShippingMethods } from "@lib/data/fulfillment"
 
 export const metadata: Metadata = {
   title: "Checkout",
@@ -30,10 +32,23 @@ export default async function Checkout() {
   const cart = await fetchCart()
   const customer = await getCustomer()
 
+  let shippingMethods = null
+  let paymentMethods = null
+
+  if (cart) {
+    shippingMethods = await listCartShippingMethods(cart.id)
+    paymentMethods = await listCartPaymentMethods(cart.region?.id ?? "")
+  }
+
   return (
     <div className="grid grid-cols-1 small:grid-cols-[1fr_416px] content-container gap-x-40 py-12">
       <Wrapper cart={cart}>
-        <CheckoutForm cart={cart} customer={customer} />
+        <CheckoutForm
+          cart={cart}
+          customer={customer}
+          shippingMethods={shippingMethods}
+          paymentMethods={paymentMethods}
+        />
       </Wrapper>
       <CheckoutSummary cart={cart} />
     </div>
