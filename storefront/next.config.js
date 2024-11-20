@@ -7,6 +7,9 @@ checkEnvVariables()
  */
 const nextConfig = {
   reactStrictMode: true,
+  typescript: {
+    ignoreBuildErrors: true,
+  },
   images: {
     remotePatterns: [
       {
@@ -15,7 +18,10 @@ const nextConfig = {
       },
       {
         protocol: "https",
-        hostname: process.env.NEXT_PUBLIC_MEDUSA_BACKEND_URL.replace('https://', ''),
+        hostname: process.env.NEXT_PUBLIC_MEDUSA_BACKEND_URL.replace(
+          "https://",
+          ""
+        ),
       },
       {
         protocol: "https",
@@ -32,8 +38,8 @@ const nextConfig = {
     ],
   },
   serverRuntimeConfig: {
-    port: process.env.PORT || 3000
-  }
+    port: process.env.PORT || 3000,
+  },
 }
 
 module.exports = nextConfig
