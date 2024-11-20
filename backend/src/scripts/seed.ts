@@ -13,26 +13,22 @@ import {
   linkSalesChannelsToStockLocationWorkflow,
   updateStoresWorkflow,
 } from "@medusajs/core-flows";
-import {
-  ExecArgs,
-} from "@medusajs/types";
+import { ExecArgs } from "@medusajs/types";
 import {
   ContainerRegistrationKeys,
   Modules,
-  ProductStatus
+  ProductStatus,
 } from "@medusajs/utils";
 
 export default async function seedDemoData({ container }: ExecArgs) {
   const logger = container.resolve(ContainerRegistrationKeys.LOGGER);
-  const remoteLink = container.resolve(
-    ContainerRegistrationKeys.REMOTE_LINK
-  );
-  const query = container.resolve(ContainerRegistrationKeys.QUERY)
+  const remoteLink = container.resolve(ContainerRegistrationKeys.REMOTE_LINK);
+  const query = container.resolve(ContainerRegistrationKeys.QUERY);
   const fulfillmentModuleService = container.resolve(Modules.FULFILLMENT);
   const salesChannelModuleService = container.resolve(Modules.SALES_CHANNEL);
   const storeModuleService = container.resolve(Modules.STORE);
 
-  const countries = ["gb", "de", "dk", "se", "fr", "es", "it"];
+  const countries = ["my", "sg", "th", "vn", "id", "ph"];
 
   logger.info("Seeding store data...");
   const [store] = await storeModuleService.listStores();
@@ -78,8 +74,8 @@ export default async function seedDemoData({ container }: ExecArgs) {
     input: {
       regions: [
         {
-          name: "Europe",
-          currency_code: "eur",
+          name: "South East Asia",
+          currency_code: "myr",
           countries,
           payment_providers: ["pp_system_default"],
         },
@@ -822,25 +818,25 @@ export default async function seedDemoData({ container }: ExecArgs) {
   logger.info("Seeding inventory levels.");
 
   const { data: inventoryItems } = await query.graph({
-    entity: 'inventory_item',
-    fields: ['id']
-  })
+    entity: "inventory_item",
+    fields: ["id"],
+  });
 
-  const inventoryLevels = []
+  const inventoryLevels = [];
   for (const inventoryItem of inventoryItems) {
     const inventoryLevel = {
       location_id: stockLocation.id,
       stocked_quantity: 1000000,
       inventory_item_id: inventoryItem.id,
-    }
-    inventoryLevels.push(inventoryLevel)
+    };
+    inventoryLevels.push(inventoryLevel);
   }
 
   await createInventoryLevelsWorkflow(container).run({
     input: {
-      inventory_levels: inventoryLevels
+      inventory_levels: inventoryLevels,
     },
-  })
+  });
 
   logger.info("Finished seeding inventory levels data.");
 }
