@@ -14,27 +14,44 @@ const regionMapCache = {
 async function getRegionMap() {
   const { regionMap, regionMapUpdated } = regionMapCache
 
-  if (
-    !regionMap.keys().next().value ||
-    regionMapUpdated < Date.now() - 3600 * 1000
-  ) {
-    // Fetch regions from Medusa. We can't use the JS client here because middleware is running on Edge and the client needs a Node environment.
-    const { regions } = await fetch(`${BACKEND_URL}/store/regions`, {
+  console.log("Checking region map:", {
+    hasKeys: regionMap.size > 0,
+    lastUpdated: new Date(regionMapUpdated).toISOString(),
+    backendUrl: BACKEND_URL,
+    defaultRegion: DEFAULT_REGION,
+  })
+
+  // Reduce cache time to 5 minutes for testing
+  if (!regionMap.size || regionMapUpdated < Date.now() - 300 * 1000) {
+    console.log("Fetching fresh regions from Medusa")
+
+    const response = await fetch(`${BACKEND_URL}/store/regions`, {
       headers: {
         "x-publishable-api-key": PUBLISHABLE_API_KEY!,
       },
       next: {
-        revalidate: 3600,
-        tags: ["regions"],
+        revalidate: 0, // Disable cache during testing
       },
-    }).then((res) => res.json())
+    })
 
-    if (!regions?.length) {
+    console.log("Region API Response:", {
+      status: response.status,
+      statusText: response.statusText,
+    })
+
+    const data = await response.json()
+    console.log("Regions data:", data)
+
+    if (!data.regions?.length) {
+      console.error("No regions found")
       notFound()
     }
 
-    // Create a map of country codes to regions.
-    regions.forEach((region: HttpTypes.StoreRegion) => {
+    // Clear existing map
+    regionMapCache.regionMap.clear()
+
+    // Update map with new data
+    data.regions.forEach((region: HttpTypes.StoreRegion) => {
       region.countries?.forEach((c) => {
         regionMapCache.regionMap.set(c.iso_2 ?? "", region)
       })
