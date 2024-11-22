@@ -4,7 +4,7 @@ import { NextRequest, NextResponse } from "next/server"
 
 const BACKEND_URL = process.env.NEXT_PUBLIC_MEDUSA_BACKEND_URL
 const PUBLISHABLE_API_KEY = process.env.NEXT_PUBLIC_MEDUSA_PUBLISHABLE_KEY
-const DEFAULT_REGION = process.env.NEXT_PUBLIC_DEFAULT_REGION || "my"
+const DEFAULT_REGION = process.env.NEXT_PUBLIC_DEFAULT_REGION || "us"
 
 const regionMapCache = {
   regionMap: new Map<string, HttpTypes.StoreRegion>(),
@@ -14,44 +14,27 @@ const regionMapCache = {
 async function getRegionMap() {
   const { regionMap, regionMapUpdated } = regionMapCache
 
-  console.log("Checking region map:", {
-    hasKeys: regionMap.size > 0,
-    lastUpdated: new Date(regionMapUpdated).toISOString(),
-    backendUrl: BACKEND_URL,
-    defaultRegion: DEFAULT_REGION,
-  })
-
-  // Reduce cache time to 5 minutes for testing
-  if (!regionMap.size || regionMapUpdated < Date.now() - 300 * 1000) {
-    console.log("Fetching fresh regions from Medusa")
-
-    const response = await fetch(`${BACKEND_URL}/store/regions`, {
+  if (
+    !regionMap.keys().next().value ||
+    regionMapUpdated < Date.now() - 3600 * 1000
+  ) {
+    // Fetch regions from Medusa. We can't use the JS client here because middleware is running on Edge and the client needs a Node environment.
+    const { regions } = await fetch(`${BACKEND_URL}/store/regions`, {
       headers: {
         "x-publishable-api-key": PUBLISHABLE_API_KEY!,
       },
       next: {
-        revalidate: 0, // Disable cache during testing
+        revalidate: 3600,
+        tags: ["regions"],
       },
-    })
+    }).then((res) => res.json())
 
-    console.log("Region API Response:", {
-      status: response.status,
-      statusText: response.statusText,
-    })
-
-    const data = await response.json()
-    console.log("Regions data:", data)
-
-    if (!data.regions?.length) {
-      console.error("No regions found")
+    if (!regions?.length) {
       notFound()
     }
 
-    // Clear existing map
-    regionMapCache.regionMap.clear()
-
-    // Update map with new data
-    data.regions.forEach((region: HttpTypes.StoreRegion) => {
+    // Create a map of country codes to regions.
+    regions.forEach((region: HttpTypes.StoreRegion) => {
       region.countries?.forEach((c) => {
         regionMapCache.regionMap.set(c.iso_2 ?? "", region)
       })
