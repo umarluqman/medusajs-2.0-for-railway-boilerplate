@@ -88,11 +88,16 @@ const Payment = ({
       const shouldInputCard =
         isStripeFunc(selectedPaymentMethod) && !activeSession
 
-      if (!activeSession) {
-        await initiatePaymentSession(cart, {
-          provider_id: selectedPaymentMethod,
-        })
-      }
+      // if (!activeSession) {
+      console.log("Initializing payment session...", selectedPaymentMethod)
+      const result = await initiatePaymentSession(cart, {
+        provider_id:
+          selectedPaymentMethod === "pp_senangpay_senangpay"
+            ? "senangpay"
+            : selectedPaymentMethod,
+      })
+      console.log("Payment session initialized:", result)
+      // }
 
       if (!shouldInputCard) {
         return router.push(
@@ -112,6 +117,8 @@ const Payment = ({
   useEffect(() => {
     setError(null)
   }, [isOpen])
+
+  console.log({ availablePaymentMethods, paymentInfoMap })
 
   return (
     <div className="bg-white">

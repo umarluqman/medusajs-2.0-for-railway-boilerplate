@@ -219,6 +219,7 @@ export async function initiatePaymentSession(
     context?: Record<string, unknown>
   }
 ) {
+  console.log("initiatePaymentSession", { cart, data })
   return sdk.store.payment
     .initiatePaymentSession(cart, data, {}, getAuthHeaders())
     .then((resp) => {

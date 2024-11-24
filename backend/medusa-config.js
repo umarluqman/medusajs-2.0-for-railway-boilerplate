@@ -40,23 +40,6 @@ const medusaConfig = {
   },
   modules: [
     {
-      key: Modules.PAYMENT,
-      resolve: "@medusajs/medusa/payment",
-      options: {
-        providers: [
-          {
-            resolve: "./src/modules/payment/senangpay",
-            id: "senangpay",
-            options: {
-              merchantId: process.env.SENANGPAY_MERCHANT_ID,
-              merchantKey: process.env.SENANGPAY_MERCHANT_KEY,
-              sandbox: process.env.SENANGPAY_SANDBOX === "true",
-            },
-          },
-        ],
-      },
-    },
-    {
       key: Modules.FILE,
       resolve: "@medusajs/file",
       options: {
@@ -131,13 +114,22 @@ const medusaConfig = {
           },
         ]
       : []),
-    ...(STRIPE_API_KEY && STRIPE_WEBHOOK_SECRET
-      ? [
+    {
+      key: Modules.PAYMENT,
+      resolve: "@medusajs/payment",
+      options: {
+        providers: [
           {
-            key: Modules.PAYMENT,
-            resolve: "@medusajs/payment",
+            resolve: "./src/modules/payment/senangpay",
+            id: "senangpay",
             options: {
-              providers: [
+              merchantId: process.env.SENANGPAY_MERCHANT_ID,
+              merchantKey: process.env.SENANGPAY_MERCHANT_KEY,
+              sandbox: process.env.SENANGPAY_SANDBOX === "true",
+            },
+          },
+          ...(STRIPE_API_KEY && STRIPE_WEBHOOK_SECRET
+            ? [
                 {
                   resolve: "@medusajs/payment-stripe",
                   id: "stripe",
@@ -146,11 +138,11 @@ const medusaConfig = {
                     webhookSecret: STRIPE_WEBHOOK_SECRET,
                   },
                 },
-              ],
-            },
-          },
-        ]
-      : []),
+              ]
+            : []),
+        ],
+      },
+    },
   ],
   plugins: [
     // 'medusa-fulfillment-manual'

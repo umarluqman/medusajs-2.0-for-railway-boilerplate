@@ -45,13 +45,29 @@ class SenangPayService extends AbstractPaymentProvider<SenangPayOptions> {
 
   constructor(container, options: SenangPayOptions) {
     super(container);
-    this.options = options;
+    if (!options?.merchantId || !options?.merchantKey) {
+      throw new Error(
+        "SenangPay payment provider requires both merchantId and merchantKey options"
+      );
+    }
+
+    this.options = {
+      merchantId: options.merchantId,
+      merchantKey: options.merchantKey,
+      sandbox: options.sandbox ?? true,
+    };
   }
 
   async initiatePayment(
     context: Record<string, unknown>
   ): Promise<PaymentProviderError | PaymentProviderSessionResponse> {
     try {
+      console.log("SenangPay Options:", {
+        merchantId: this.options?.merchantId,
+        hasMerchantKey: Boolean(this.options?.merchantKey),
+        sandbox: this.options?.sandbox,
+      });
+      console.log("Payment Context:", context);
       const { amount, currency_code, resource_id, email, name, phone } =
         context;
 
@@ -84,6 +100,7 @@ class SenangPayService extends AbstractPaymentProvider<SenangPayOptions> {
         name: name as string,
         phone: phone as string,
       };
+      console.log("dataXXXXXXXX", data);
 
       return {
         data,

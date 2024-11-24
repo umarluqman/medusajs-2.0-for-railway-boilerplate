@@ -6,7 +6,7 @@ import StripeWrapper from "./stripe-wrapper"
 import { PayPalScriptProvider } from "@paypal/react-paypal-js"
 import { createContext } from "react"
 import { HttpTypes } from "@medusajs/types"
-import { isPaypal, isStripe } from "@lib/constants"
+import { isPaypal, isStripe, isSenangPay } from "@lib/constants"
 
 type WrapperProps = {
   cart: HttpTypes.StoreCart
@@ -24,6 +24,10 @@ const Wrapper: React.FC<WrapperProps> = ({ cart, children }) => {
   const paymentSession = cart.payment_collection?.payment_sessions?.find(
     (s) => s.status === "pending"
   )
+
+  if (isSenangPay(paymentSession?.provider_id) && paymentSession) {
+    return <div>{children}</div>
+  }
 
   if (
     isStripe(paymentSession?.provider_id) &&
